@@ -101,7 +101,7 @@ for iteration in range(ITERATIONS):
     # y = x**2 + x - 1
     # x = tf.Variable(2.0)
     scores, _ = D.get_output_for(Gz_tensor)
-    image_scores = scores[0]
+    image_scores = scores[0] * -1
     print("discriminator function", image_scores)
     # print(discriminator_function)
     # discriminator_scores = discriminator_function[0]
@@ -116,13 +116,13 @@ for iteration in range(ITERATIONS):
 
     loss_for_image = grad_complete_loss[0]
 
-    optimizer = tf.train.GradientDescentOptimizer(
-        0.05).compute_gradients(image_scores, var_list=tensorZ)
+    optimizer = tf.train.GradientDescentOptimizer(0.01)
 
-    print(optimizer)
+    grads_vars = optimizer.compute_gradients(image_scores, var_list=tensorZ)
 
-    apply = tf.train.GradientDescentOptimizer(
-        0.05).apply_gradients(optimizer)
+    print(grads_vars)
+
+    apply = optimizer.apply_gradients(grads_vars)
 
     optimized = sess.run(apply)
     print(optimized)

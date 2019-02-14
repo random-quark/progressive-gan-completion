@@ -50,6 +50,7 @@ def save_image(image):
 
 for iteration in range(ITERATIONS):
     tensorZ = tf.Variable(z)
+    prev_tensor_z = tf.identity(tensorZ)
 
     init = tf.global_variables_initializer()
     sess.run(init)
@@ -111,7 +112,24 @@ for iteration in range(ITERATIONS):
     print(grad_complete_loss_graph)
     # grad_complete_loss_graph = tf.gradients(complete_loss, z)
     grad_complete_loss = sess.run(grad_complete_loss_graph)
-    print("Grad complete loss", grad_complete_loss)
+    # print("Grad complete loss", grad_complete_loss)
+
+    loss_for_image = grad_complete_loss[0]
+
+    optimizer = tf.train.GradientDescentOptimizer(
+        0.05).compute_gradients(image_scores, var_list=tensorZ)
+
+    print(optimizer)
+
+    apply = tf.train.GradientDescentOptimizer(
+        0.05).apply_gradients(optimizer)
+
+    optimized = sess.run(apply)
+    print(optimized)
+
+    difference = tf.abs(tensorZ - z)
+    difference_calc = sess.run(difference)
+    print(difference_calc)
 
     # COMPLETE THE IMAGE WITH MASKS
     # complete_image = tf.add(tf.mul(inverted_mask, Gz), (mask, y))

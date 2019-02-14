@@ -8,21 +8,33 @@ import PIL
 import PIL.Image as Image
 import scipy.misc
 
+ITERATIONS = 2
+
 sess = tf.InteractiveSession()
 
+counter = 0
 
-# try:
-#     tf.global_variables_initializer().run()
-# except:
-#     tf.initialize_all_variables().run()
 
-ITERATIONS = 1
+def save_image(image):
+    global counter
+    counter += 1
+    images = np.array([image])
+    images = np.clip(np.rint((images + 1.0) / 2.0 * 255.0), 0.0,
+                     255.0).astype(np.uint8)  # [-1,1] => [0,255]
+    images = images.transpose(0, 2, 3, 1)  # NCHW => NHWC
+    PIL.Image.fromarray(images[0], 'RGB').save(
+        'img-sample-' + str(counter) + '.png')
+
+
+z = np.random.randn(1, 512)
+tensorZ = tf.Variable(z)
+
+init = tf.global_variables_initializer()
+sess.run(init)
 
 with open('/results/005-pgan-customimages-preset-v2-1gpu-fp32/network-snapshot-007320.pkl', 'rb') as file:
     G, D, Gs = pickle.load(file)
 
-
-z = np.random.randn(1, 512)
 labels = np.zeros([z.shape[0]] + Gs.input_shapes[1][1:])
 
 v = 0
@@ -40,27 +52,15 @@ reshaped_y = y.transpose(2, 0, 1)
 reshaped_y = (reshaped_y / 255) * 2.0 - 1.0
 
 
-def save_image(image):
-    images = np.array([image])
-    images = np.clip(np.rint((images + 1.0) / 2.0 * 255.0), 0.0,
-                     255.0).astype(np.uint8)  # [-1,1] => [0,255]
-    images = images.transpose(0, 2, 3, 1)  # NCHW => NHWC
-    PIL.Image.fromarray(images[0], 'RGB').save('img-sample.png')
-
-
 for iteration in range(ITERATIONS):
-    tensorZ = tf.Variable(z)
-    prev_tensor_z = tf.identity(tensorZ)
-
-    init = tf.global_variables_initializer()
-    sess.run(init)
 
     Gz_tensor = Gs.get_output_for(tensorZ, labels)
     Gz_tensor_image = Gz_tensor[0]
     print("Gz tensor", Gz_tensor_image)
 
-    # Gz = Gs.run(z, labels)
-    # generated_image = Gz[0]
+    # gen_image = Gs.run(z, labels)[0]
+    generated_image_pixels = sess.run(Gz_tensor_image)
+    save_image(generated_image_pixels)
 
     # CALCULATE DIFFERENCE
     # WITH NO MASK
@@ -130,6 +130,9 @@ for iteration in range(ITERATIONS):
     difference = tf.abs(tensorZ - z)
     difference_calc = sess.run(difference)
     print(difference_calc)
+
+    generated_image_pixels = sess.run(Gz_tensor_image)
+    save_image(generated_image_pixels)
 
     # COMPLETE THE IMAGE WITH MASKS
     # complete_image = tf.add(tf.mul(inverted_mask, Gz), (mask, y))

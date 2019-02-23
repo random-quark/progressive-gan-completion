@@ -50,14 +50,10 @@ reshaped_y = y.transpose(2, 0, 1)
 reshaped_y = (reshaped_y / 255) * 2.0 - 1.0
 
 # make mask
-mask = np.ones(reshaped_y.shape)
-mask[:, :, 128:] = 0.0
-
-masked_generate_image = tf.multiply(reshaped_y, mask)
-image_out = sess.run(masked_generate_image)
-save_image(image_out)
-
-exit()
+mask = np.zeros(reshaped_y.shape, dtype=np.float32)
+for x in range(128):
+    value = 1 - (x/128)
+    mask[:, :, x] = value
 
 # GENERATE IMAGE USING G() AND SAVE
 Gz_tensor = Gs.get_output_for(tensorZ, labels)
@@ -68,10 +64,8 @@ Gz_tensor_image = Gz_tensor[0]
 
 # CALCULATE CONTEXTUAL LOSS (DIFFERENCE)
 # MASK
-# contextual_loss = tf.reduce_sum(
-#     tf.contrib.layers.flatten(tf.abs(tf.mul(mask, Gz_tensor_image), tf.mul(mask, y))), 1)
 contextual_loss = tf.reduce_sum(
-    tf.contrib.layers.flatten(tf.abs(Gz_tensor_image - reshaped_y)))
+    tf.contrib.layers.flatten(tf.abs(tf.multiply(mask, Gz_tensor_image) - tf.multiply(mask, reshaped_y))))
 
 # PERCEPTUAL LOSS - GET D() SCORES FOR OUTPUT OF G()
 # scores, _ = D.get_output_for(Gz_tensor)

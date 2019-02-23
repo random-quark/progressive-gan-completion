@@ -63,23 +63,19 @@ Gz_tensor_image = Gz_tensor[0]
 # TODO: try adding the completed image to discriminator, not just generated image
 
 # CALCULATE CONTEXTUAL LOSS (DIFFERENCE)
-# MASK
 contextual_loss = tf.reduce_sum(
     tf.contrib.layers.flatten(tf.abs(tf.multiply(mask, Gz_tensor_image) - tf.multiply(mask, reshaped_y))))
 
 # PERCEPTUAL LOSS - GET D() SCORES FOR OUTPUT OF G()
-# scores, _ = D.get_output_for(Gz_tensor)
-# perceptual_loss = scores[0] * -1
+scores, _ = D.get_output_for(Gz_tensor)
+perceptual_loss = scores[0] * -1
 
 # CALCULATE COMPLETE LOSS - perceptual + contextual
-# complete_loss = contextual_loss + 0.1 * perceptual_loss
-complete_loss = contextual_loss
+complete_loss = contextual_loss + 0.1 * perceptual_loss
 
 optimizer = tf.train.AdamOptimizer()
 optimize = optimizer.minimize(complete_loss, var_list=tensorZ)
 sess.run(tf.variables_initializer(optimizer.variables()))
-# grads_vars = optimizer.compute_gradients(complete_loss, var_list=tensorZ)
-# apply = optimizer.apply_gradients(grads_vars)
 
 for iteration in range(ITERATIONS):
     print("running iteration " + str(iteration))

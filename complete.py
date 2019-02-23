@@ -82,15 +82,15 @@ apply = optimizer.apply_gradients(grads_vars)
 for iteration in range(ITERATIONS):
     print("running iteration " + str(iteration))
     # test - print the complete loss
-    complete_loss_out = sess.run(complete_loss)
-    print("Complete loss", complete_loss_out)
+    # complete_loss_out = sess.run(complete_loss)
+    # print("Complete loss", complete_loss_out)
 
     # OPTIMIZE Z BASED ON LOSS
     optimized = sess.run(apply)
 
     # SAVE NEW IMAGE TO CHECK WHAT CHANGED AFTER OPTIMIZATION OF Z
-    generated_image_pixels = sess.run(Gz_tensor_image)
-    save_image(generated_image_pixels)
+    # generated_image_pixels = sess.run(Gz_tensor_image)
+    # save_image(generated_image_pixels)
 
     # COMPLETE THE IMAGE WITH MASKS
     # complete_image = tf.add(tf.mul(inverted_mask, Gz), (mask, y))

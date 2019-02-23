@@ -32,13 +32,13 @@ v = 0
 z = np.random.randn(1, 512)
 tensorZ = tf.Variable(z)
 
-
-optimizer = tf.train.GradientDescentOptimizer(LEARNING_RATE)
 init = tf.global_variables_initializer()
 sess.run(init)
 
+
 with open('/results/005-pgan-customimages-preset-v2-1gpu-fp32/network-snapshot-007320.pkl', 'rb') as file:
     G, D, Gs = pickle.load(file)
+
 
 labels = np.zeros([z.shape[0]] + Gs.input_shapes[1][1:])
 
@@ -52,7 +52,6 @@ reshaped_y = (reshaped_y / 255) * 2.0 - 1.0
 # make mask
 # mask = np.ones(y.shape)
 # mask[128:, :, :] = 0.0
-
 
 # GENERATE IMAGE USING G() AND SAVE
 Gz_tensor = Gs.get_output_for(tensorZ, labels)
@@ -76,21 +75,24 @@ contextual_loss = tf.reduce_sum(
 # complete_loss = contextual_loss + 0.1 * perceptual_loss
 complete_loss = contextual_loss
 
-grads_vars = optimizer.compute_gradients(complete_loss, var_list=tensorZ)
-apply = optimizer.apply_gradients(grads_vars)
+optimizer = tf.train.AdamOptimizer()
+optimize = optimizer.minimize(complete_loss, var_list=tensorZ)
+sess.run(tf.variables_initializer(optimizer.variables()))
+# grads_vars = optimizer.compute_gradients(complete_loss, var_list=tensorZ)
+# apply = optimizer.apply_gradients(grads_vars)
 
 for iteration in range(ITERATIONS):
     print("running iteration " + str(iteration))
     # test - print the complete loss
-    # complete_loss_out = sess.run(complete_loss)
-    # print("Complete loss", complete_loss_out)
+    complete_loss_out = sess.run(complete_loss)
+    print("Complete loss", complete_loss_out)
 
     # OPTIMIZE Z BASED ON LOSS
-    optimized = sess.run(apply)
+    optimized = sess.run(optimize)
 
     # SAVE NEW IMAGE TO CHECK WHAT CHANGED AFTER OPTIMIZATION OF Z
-    # generated_image_pixels = sess.run(Gz_tensor_image)
-    # save_image(generated_image_pixels)
+    generated_image_pixels = sess.run(Gz_tensor_image)
+    save_image(generated_image_pixels)
 
     # COMPLETE THE IMAGE WITH MASKS
     # complete_image = tf.add(tf.mul(inverted_mask, Gz), (mask, y))

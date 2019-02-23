@@ -33,7 +33,7 @@ z = np.random.randn(1, 512)
 tensorZ = tf.Variable(z)
 
 
-optimizer = tf.train.AdamOptimizer()
+optimizer = tf.train.GradientDescentOptimizer(LEARNING_RATE)
 init = tf.global_variables_initializer()
 sess.run(init)
 
@@ -53,38 +53,39 @@ reshaped_y = (reshaped_y / 255) * 2.0 - 1.0
 # mask = np.ones(y.shape)
 # mask[128:, :, :] = 0.0
 
+
+# GENERATE IMAGE USING G() AND SAVE
+Gz_tensor = Gs.get_output_for(tensorZ, labels)
+Gz_tensor_image = Gz_tensor[0]
+
+# MASK RIGHT HAND SIDE OF IMAGES BEFORE CALCULATING DIFFERENCE
+# TODO: try adding the completed image to discriminator, not just generated image
+
+# CALCULATE CONTEXTUAL LOSS (DIFFERENCE)
+# MASK
+# contextual_loss = tf.reduce_sum(
+#     tf.contrib.layers.flatten(tf.abs(tf.mul(mask, Gz_tensor_image), tf.mul(mask, y))), 1)
+contextual_loss = tf.reduce_sum(
+    tf.contrib.layers.flatten(tf.abs(Gz_tensor_image - reshaped_y)))
+
+# PERCEPTUAL LOSS - GET D() SCORES FOR OUTPUT OF G()
+# scores, _ = D.get_output_for(Gz_tensor)
+# perceptual_loss = scores[0] * -1
+
+# CALCULATE COMPLETE LOSS - perceptual + contextual
+# complete_loss = contextual_loss + 0.1 * perceptual_loss
+complete_loss = contextual_loss
+
+grads_vars = optimizer.compute_gradients(complete_loss, var_list=tensorZ)
+apply = optimizer.apply_gradients(grads_vars)
+
 for iteration in range(ITERATIONS):
     print("running iteration " + str(iteration))
-
-    # GENERATE IMAGE USING G() AND SAVE
-    Gz_tensor = Gs.get_output_for(tensorZ, labels)
-    Gz_tensor_image = Gz_tensor[0]
-
-    # MASK RIGHT HAND SIDE OF IMAGES BEFORE CALCULATING DIFFERENCE
-    # TODO: try adding the completed image to discriminator, not just generated image
-
-    # CALCULATE CONTEXTUAL LOSS (DIFFERENCE)
-    # MASK
-    # contextual_loss = tf.reduce_sum(
-    #     tf.contrib.layers.flatten(tf.abs(tf.mul(mask, Gz_tensor_image), tf.mul(mask, y))), 1)
-    contextual_loss = tf.reduce_sum(
-        tf.contrib.layers.flatten(tf.abs(Gz_tensor_image - reshaped_y)))
-
-    # PERCEPTUAL LOSS - GET D() SCORES FOR OUTPUT OF G()
-    # scores, _ = D.get_output_for(Gz_tensor)
-    # perceptual_loss = scores[0] * -1
-
-    # CALCULATE COMPLETE LOSS - perceptual + contextual
-    # complete_loss = contextual_loss + 0.1 * perceptual_loss
-    complete_loss = contextual_loss
-
     # test - print the complete loss
     complete_loss_out = sess.run(complete_loss)
     print("Complete loss", complete_loss_out)
 
     # OPTIMIZE Z BASED ON LOSS
-    grads_vars = optimizer.compute_gradients(complete_loss, var_list=tensorZ)
-    apply = optimizer.apply_gradients(grads_vars)
     optimized = sess.run(apply)
 
     # SAVE NEW IMAGE TO CHECK WHAT CHANGED AFTER OPTIMIZATION OF Z

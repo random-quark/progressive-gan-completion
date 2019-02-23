@@ -53,12 +53,9 @@ reshaped_y = (reshaped_y / 255) * 2.0 - 1.0
 
 
 for iteration in range(ITERATIONS):
-
+    # GENERATE IMAGE USING G() AND SAVE
     Gz_tensor = Gs.get_output_for(tensorZ, labels)
     Gz_tensor_image = Gz_tensor[0]
-    print("Gz tensor", Gz_tensor_image)
-
-    # gen_image = Gs.run(z, labels)[0]
     generated_image_pixels = sess.run(Gz_tensor_image)
     save_image(generated_image_pixels)
 
@@ -73,7 +70,7 @@ for iteration in range(ITERATIONS):
     # TODO: this
     # TODO: try adding the completed image to discriminator, not just generated image
 
-    # CALCULATE CONTEXTUAL LOSS
+    # CALCULATE CONTEXTUAL LOSS (DIFFERENCE)
     # MASK
     # contextual_loss = tf.reduce_sum(
     #     tf.contrib.layers.flatten(tf.abs(tf.mul(mask, Gz), tf.mul(mask, y))), 1)
@@ -84,53 +81,28 @@ for iteration in range(ITERATIONS):
     # contextual_loss_out = sess.run(contextual_loss)
     # print("Contextual loss", contextual_loss_out)
 
-    # CALCULATE PERCEPTUAL LOSS
-    # perceptual_loss, _ = D.run(Gz)
-    # print("perceptual loss", perceptual_loss)
-    # print("per", perceptual_loss[0][0])
-    # pl = perceptual_loss[0][0]
+    # PERCEPTUAL LOSS - GET D() SCORES FOR OUTPUT OF G()
+    scores, _ = D.get_output_for(Gz_tensor)
+    image_scores = scores[0] * -1
 
     # CALCULATE COMPLETE LOSS
     # complete_loss = contextual_loss_out + 0.1 * pl
     # print("Complete loss", complete_loss)
 
-    # CALCULATE LOSS GRADIENT
-    # grad_complete_loss = tf.gradients(complete_loss, z)
-
-    # tf.gradients(y, x)
-    # y = x**2 + x - 1
-    # x = tf.Variable(2.0)
-    scores, _ = D.get_output_for(Gz_tensor)
-    image_scores = scores[0] * -1
-    print("discriminator function", image_scores)
-    # print(discriminator_function)
-    # discriminator_scores = discriminator_function[0]
-    # print("discriminator_scores ", discriminator_scores)
-
+    # GET GRADIENT OF LOSS
     grad_complete_loss_graph = tf.gradients(
         image_scores, tensorZ)
-    print(grad_complete_loss_graph)
     # grad_complete_loss_graph = tf.gradients(complete_loss, z)
     grad_complete_loss = sess.run(grad_complete_loss_graph)
-    # print("Grad complete loss", grad_complete_loss)
-
     loss_for_image = grad_complete_loss[0]
 
+    # OPTIMIZE Z BASED ON LOSS
     optimizer = tf.train.GradientDescentOptimizer(0.01)
-
     grads_vars = optimizer.compute_gradients(image_scores, var_list=tensorZ)
-
-    print(grads_vars)
-
     apply = optimizer.apply_gradients(grads_vars)
-
     optimized = sess.run(apply)
-    print(optimized)
 
-    difference = tf.abs(tensorZ - z)
-    difference_calc = sess.run(difference)
-    print(difference_calc)
-
+    # SAVE NEW IMAGE TO CHECK WHAT CHANGED AFTER OPTIMIZATION OF Z
     generated_image_pixels = sess.run(Gz_tensor_image)
     save_image(generated_image_pixels)
 

@@ -15,8 +15,8 @@ LEARNING_RATE = 0.1
 def save_image(image):
     global counter
     counter += 1
-    if counter % 50 > 0:
-        return
+    # if counter % 50 > 0:
+    #     return
     images = np.array([image])
     images = np.clip(np.rint((images + 1.0) / 2.0 * 255.0), 0.0,
                      255.0).astype(np.uint8)  # [-1,1] => [0,255]
@@ -50,8 +50,14 @@ reshaped_y = y.transpose(2, 0, 1)
 reshaped_y = (reshaped_y / 255) * 2.0 - 1.0
 
 # make mask
-# mask = np.ones(y.shape)
-# mask[128:, :, :] = 0.0
+mask = np.ones(reshaped_y.shape)
+mask[:, :, 128:] = 0.0
+
+masked_generate_image = tf.multiply(reshaped_y, mask)
+image_out = sess.run(masked_generate_image)
+save_image(image_out)
+
+exit()
 
 # GENERATE IMAGE USING G() AND SAVE
 Gz_tensor = Gs.get_output_for(tensorZ, labels)

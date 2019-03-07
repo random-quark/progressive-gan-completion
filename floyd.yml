@@ -28,3 +28,11 @@ task:
       - destination: source
         source: randomquark/datasets/completion-source/1
     command: python complete.py
+  sequence:
+    machine: gpu
+    input:
+      - destination: results
+        source: randomquark/datasets/progressive-data/2
+      - destination: source
+        source: randomquark/datasets/completion-source/1
+    command: python sequence.py

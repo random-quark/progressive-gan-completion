@@ -11,7 +11,6 @@ tf.InteractiveSession()
 with open('/results/005-pgan-customimages-preset-v2-1gpu-fp32/network-snapshot-007320.pkl', 'rb') as file:
     G, D, Gs = pickle.load(file)
 
-Gs(z)
 
 print("INPUT")
 print(*Gs.input_shapes[0][1:])

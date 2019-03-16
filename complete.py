@@ -10,12 +10,11 @@ import scipy.misc
 
 from image_util import save_image
 
-ITERATIONS = 50
-LEARNING_RATE = 0.1
+ITERATIONS = 500
+LEARNING_RATE = 0.01
 
 sess = tf.InteractiveSession()
 
-counter = 0
 v = 0
 z = np.random.randn(1, 512)
 tensorZ = tf.Variable(z)
@@ -30,8 +29,8 @@ labels = np.zeros([z.shape[0]] + Gs.input_shapes[1][1:])
 
 # make gradient mask
 mask = np.zeros((3, 256, 256), dtype=np.float32)
-for x in range(128):
-    value = 1 - (x/128)
+for x in range(16):
+    value = 1 - (x/16)
     mask[:, :, x] = value
 
 
@@ -47,23 +46,51 @@ class Complete:
         contextual_loss = tf.reduce_sum(
             tf.contrib.layers.flatten(tf.abs(tf.multiply(mask, Gz_tensor_image) - tf.multiply(mask, source_image))))
 
-        # if counter == 0:
-        #     save_image(mask, "mask", index)
-
         # PERCEPTUAL LOSS - GET D() SCORES FOR OUTPUT OF G()
         # TODO: try adding the completed image to discriminator, not just generated image
         scores, _ = D.get_output_for(Gz_tensor)
-        perceptual_loss = scores[0] * -1
+        perceptual_loss = scores[0][0] * -1
 
         # CALCULATE COMPLETE LOSS - perceptual + contextual
-        complete_loss = contextual_loss + 0.1 * perceptual_loss
+        # complete_loss = contextual_loss + 0.1 * perceptual_loss
+        complete_loss = contextual_loss
 
-        optimizer = tf.train.AdamOptimizer()
+        optimizer = tf.train.GradientDescentOptimizer(LEARNING_RATE)
         optimize = optimizer.minimize(complete_loss, var_list=tensorZ)
         sess.run(tf.variables_initializer(optimizer.variables()))
 
         for iteration in range(ITERATIONS):
-            print("running iteration " + str(iteration))
+            # print("running iteration " + str(iteration))
+
+            if iteration % 100 == 0:
+                save_image(mask, "mask", index)
+
+                masked_source = sess.run(tf.multiply(mask, source_image))
+
+                generated = sess.run(Gz_tensor_image)
+
+                masked_generated = sess.run(
+                    tf.multiply(mask, Gz_tensor_image))
+
+                difference = sess.run(tf.abs(tf.multiply(
+                    mask, Gz_tensor_image) - tf.multiply(mask, source_image)))
+
+                difference_number = sess.run(tf.reduce_sum(
+                    tf.contrib.layers.flatten(tf.abs(tf.multiply(mask, Gz_tensor_image) - tf.multiply(mask, source_image)))))
+                print(iteration, "contexual loss", difference_number)
+
+                perceptual_loss_number = sess.run(perceptual_loss)
+                print(iteration, "perceptual loss", perceptual_loss_number)
+
+                complete_loss_number = sess.run(complete_loss)
+                print(iteration, "complete loss", complete_loss_number)
+
+                save_image(generated, "th-iteration-1-generated", iteration)
+                save_image(masked_source,
+                           "th-iteration2-masked_source", iteration)
+                save_image(masked_generated,
+                           "th-iteration3-masked_generated", iteration)
+                save_image(difference, "th-iteration4-difference", iteration)
 
             # OPTIMIZE Z BASED ON LOSS
             sess.run(optimize)

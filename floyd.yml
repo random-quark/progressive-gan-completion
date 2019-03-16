@@ -34,5 +34,5 @@ task:
       - destination: results
         source: randomquark/datasets/progressive-data/2
       - destination: source
-        source: randomquark/datasets/completion-source/1
+        source: randomquark/datasets/nonbayeux/1
     command: python sequence.py

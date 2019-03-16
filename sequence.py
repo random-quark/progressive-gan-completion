@@ -4,7 +4,7 @@ from complete import Complete
 import PIL
 import PIL.Image as Image
 
-SEQUENCE_LENGTH = 5
+SEQUENCE_LENGTH = 1
 
 
 def save_image(image, title, index):
@@ -21,7 +21,7 @@ complete = Complete()
 # source_image shape (256, 256, 3)
 # source_image = scipy.misc.imread('/source/bayeux1.png',
 #                                  mode='RGB').astype(np.float)
-source_image = scipy.misc.imread('./source.png',
+source_image = scipy.misc.imread('/source/Black256.jpg',
                                  mode='RGB').astype(np.float)
 
 
